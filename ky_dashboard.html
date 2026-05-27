@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KY Pre-K Assessment Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f4f6f9; color: #1a2332; padding: 24px; min-height: 100vh;
+  }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .bw-logo { color: #4A90D9; font-weight: 700; font-size: 15px; }
+  .header h1 { font-size: 20px; font-weight: 700; color: #1a2332; }
+  .header-right { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #666; }
+  .sel { border: 1px solid #dde2ea; border-radius: 6px; padding: 6px 10px; font-size: 13px; background: white; color: #1a2332; cursor: pointer; }
+  .divider { width: 1px; height: 20px; background: #dde2ea; }
+  .alert-banner { background: #FFF8EC; border: 1px solid #F5C842; border-radius: 8px; padding: 10px 16px; font-size: 13px; color: #7a5c00; margin-bottom: 20px; }
+
+  /* Tabs */
+  .tab-bar { display: flex; gap: 0; border-bottom: 2px solid #e8ecf2; margin-bottom: 24px; }
+  .tab-btn { padding: 10px 20px; font-size: 13px; font-weight: 500; color: #8892a4; cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+  .tab-btn:hover { color: #4A90D9; }
+  .tab-btn.active { color: #4A90D9; border-bottom-color: #4A90D9; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Summary cards */
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+  .card { background: white; border-radius: 10px; padding: 18px 20px; border: 1px solid #e8ecf2; }
+  .card-label { font-size: 12px; color: #8892a4; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .card-value { font-size: 28px; font-weight: 700; }
+  .card-value.good { color: #2EAB6E; }
+  .card-value.warn { color: #F5A623; }
+  .card-value.blue { color: #4A90D9; }
+  .card-sub { font-size: 12px; color: #aab0bb; margin-top: 4px; }
+  .section-title { font-size: 15px; font-weight: 600; color: #1a2332; margin-bottom: 4px; }
+
+  /* County cards */
+  .county-summary { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 24px; }
+  .county-card { background: white; border-radius: 8px; padding: 14px 16px; border: 1px solid #e8ecf2; cursor: pointer; transition: all 0.15s; }
+  .county-card:hover { border-color: #4A90D9; }
+  .county-card.active { border: 2px solid #4A90D9; }
+  .county-card .cc-name { font-size: 11px; color: #8892a4; margin-bottom: 4px; }
+  .county-card .cc-pct { font-size: 20px; font-weight: 700; }
+  .county-card .cc-bar-bg { height: 4px; background: #e8ecf2; border-radius: 2px; margin-top: 8px; }
+  .county-card .cc-bar-fill { height: 4px; border-radius: 2px; }
+  .county-card .cc-progs { font-size: 11px; color: #aab0bb; margin-top: 4px; }
+
+  /* Bar chart */
+  .chart-card { background: white; border-radius: 10px; padding: 20px 24px; border: 1px solid #e8ecf2; }
+  .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .chart-header h3 { font-size: 15px; font-weight: 600; }
+  .chart-header p { font-size: 12px; color: #8892a4; margin-top: 2px; }
+  .legend { display: flex; gap: 16px; font-size: 12px; color: #666; align-items: center; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+  .bar-chart-scroll { overflow-x: auto; }
+  .bar-chart-inner { position: relative; padding-left: 42px; }
+  .y-axis { position: absolute; left: 0; top: 0; height: 220px; display: flex; flex-direction: column; justify-content: space-between; }
+  .y-label { font-size: 10px; color: #aab0bb; line-height: 1; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 260px; padding-bottom: 40px; position: relative; min-width: 600px; background: repeating-linear-gradient(to bottom, #f0f3f7 0, #f0f3f7 1px, transparent 1px, transparent 25%); }
+  .target-line { position: absolute; top: 0; left: 0; right: 0; height: 1px; background: #e04444; opacity: 0.5; pointer-events: none; }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; position: relative; min-width: 52px; }
+  .bar-wrap { width: 100%; display: flex; align-items: flex-end; justify-content: center; height: calc(100% - 40px); position: relative; }
+  .bar { width: 68%; border-radius: 4px 4px 0 0; transition: opacity 0.15s; cursor: pointer; position: relative; }
+  .bar:hover { opacity: 0.8; }
+  .bar-pct-label { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 600; color: #444; white-space: nowrap; }
+  .bar-x-label { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); font-size: 10px; color: #8892a4; white-space: nowrap; text-align: center; width: 58px; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Growth tab */
+  .growth-filter-bar { display: flex; align-items: flex-end; gap: 12px; background: white; border-radius: 10px; border: 1px solid #e8ecf2; padding: 14px 18px; margin-bottom: 16px; flex-wrap: wrap; }
+  .gf-group { display: flex; flex-direction: column; gap: 5px; }
+  .gf-label { font-size: 11px; font-weight: 600; color: #8892a4; text-transform: uppercase; letter-spacing: 0.04em; }
+  .gf-active { display: flex; align-items: center; gap: 6px; background: #f0f6ff; border: 1px solid #c5d8f5; border-radius: 20px; padding: 4px 10px; font-size: 12px; color: #4A90D9; align-self: flex-end; }
+  .growth-layout { display: grid; grid-template-columns: 260px 1fr; gap: 20px; align-items: start; }
+  .filter-panel { background: white; border-radius: 10px; border: 1px solid #e8ecf2; overflow: hidden; }
+  .filter-section { border-bottom: 1px solid #e8ecf2; }
+  .filter-section:last-child { border-bottom: none; }
+  .filter-section-header { padding: 12px 16px; font-size: 12px; font-weight: 600; color: #8892a4; text-transform: uppercase; letter-spacing: 0.05em; background: #f8f9fb; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+  .filter-section-header:hover { background: #f0f3f7; }
+  .filter-domain-btn { display: block; width: 100%; text-align: left; padding: 10px 16px; font-size: 13px; color: #555f72; background: none; border: none; cursor: pointer; border-left: 3px solid transparent; transition: all 0.12s; }
+  .filter-domain-btn:hover { background: #f4f6f9; color: #1a2332; }
+  .filter-domain-btn.active { color: #4A90D9; font-weight: 600; border-left-color: #4A90D9; background: #f0f6ff; }
+  .filter-skill-list { padding: 4px 0; display: none; }
+  .filter-skill-list.open { display: block; }
+  .filter-skill-btn { display: block; width: 100%; text-align: left; padding: 7px 16px 7px 28px; font-size: 12px; color: #6b7588; background: none; border: none; cursor: pointer; border-left: 3px solid transparent; transition: all 0.12s; }
+  .filter-skill-btn:hover { background: #f4f6f9; color: #1a2332; }
+  .filter-skill-btn.active { color: #4A90D9; font-weight: 600; border-left-color: #4A90D9; background: #f0f6ff; }
+  .filter-subskill-list { display: none; padding: 2px 0; }
+  .filter-subskill-list.open { display: block; }
+  .filter-subskill-btn { display: block; width: 100%; text-align: left; padding: 6px 16px 6px 42px; font-size: 11px; color: #8892a4; background: none; border: none; cursor: pointer; transition: all 0.12s; }
+  .filter-subskill-btn:hover { background: #f4f6f9; color: #1a2332; }
+  .filter-subskill-btn.active { color: #4A90D9; font-weight: 600; background: #f0f6ff; }
+
+  /* Line chart area */
+  .growth-chart-card { background: white; border-radius: 10px; border: 1px solid #e8ecf2; padding: 24px; }
+  .growth-chart-header { margin-bottom: 6px; }
+  .growth-chart-header h3 { font-size: 16px; font-weight: 600; }
+  .growth-chart-header .subtitle { font-size: 12px; color: #8892a4; margin-top: 3px; margin-bottom: 20px; }
+  .growth-summary-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .g-card { background: #f8f9fb; border-radius: 8px; padding: 14px 16px; text-align: center; }
+  .g-card .g-period { font-size: 11px; color: #8892a4; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .g-card .g-score { font-size: 26px; font-weight: 700; color: #1a2332; }
+  .g-card .g-range { font-size: 11px; color: #aab0bb; margin-top: 2px; }
+  .line-chart-wrap { position: relative; height: 280px; }
+  svg.line-chart { width: 100%; height: 100%; }
+
+  /* Obs row */
+  .obs-row { display: flex; align-items: center; gap: 0; border: 1px solid #e8ecf2; border-radius: 8px; padding: 12px 16px; margin: 14px 0 0; background: #f8f9fb; }
+  .obs-label { font-size: 11px; font-weight: 600; color: #8892a4; text-transform: uppercase; letter-spacing: 0.04em; width: 130px; flex-shrink: 0; }
+  .obs-period-wrap { display: flex; align-items: center; gap: 0; flex: 1; }
+  .obs-period { flex: 1; text-align: center; }
+  .obs-period-name { font-size: 10px; color: #aab0bb; margin-bottom: 2px; }
+  .obs-val { font-size: 15px; font-weight: 700; color: #1a2332; }
+  .obs-arrow { color: #dde2ea; font-size: 16px; padding: 0 8px; flex-shrink: 0; }
+
+  .tooltip {
+    position: fixed; background: #1a2332; color: white; padding: 8px 12px;
+    border-radius: 6px; font-size: 12px; pointer-events: none; z-index: 1000;
+    display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); line-height: 1.6;
+  }
+  .caret { font-size: 10px; color: #8892a4; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="bw-logo">&#9733; brightwheel</div>
+    <div class="divider"></div>
+    <h1>State of Kentucky Dashboard</h1>
+  </div>
+  <div class="header-right">
+    <span>Assessment window:</span>
+    <select class="sel" id="windowSelect" onchange="updateWindow(this.value)">
+      <option value="fall25">Fall 2025</option>
+      <option value="winter26">Winter 2026</option>
+      <option value="spring26" selected>Spring 2026</option>
+    </select>
+  </div>
+</div>
+
+<div class="alert-banner">
+  &#9888; <strong>11 programs</strong> have not yet logged any assessments in the Fall 2026 window.
+</div>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('usage', this)">Assessment Usage</button>
+  <button class="tab-btn" onclick="switchTab('growth', this)">Developmental Growth</button>
+</div>
+
+<!-- ===================== TAB 1: ASSESSMENT USAGE ===================== -->
+<div class="tab-panel active" id="tab-usage">
+
+  <div class="summary-grid">
+    <div class="card">
+      <div class="card-label">Programs with &gt;1 assessment</div>
+      <div class="card-value blue">69%</div>
+      <div class="card-sub">76 of 110 programs</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Students with &ge;1 assessment</div>
+      <div class="card-value good">64%</div>
+      <div class="card-sub">2,432 of 3,800 students</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Programs fully complete</div>
+      <div class="card-value warn">38%</div>
+      <div class="card-sub">42 of 110 programs at 100%</div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;">
+    <div>
+      <div class="section-title">Completion by County</div>
+      <div style="font-size:12px;color:#aab0bb;margin-bottom:14px;">Select a county to filter the program chart below</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;font-size:13px;color:#555f72;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-weight:500;">Age Group:</span>
+        <select class="sel" id="ageSelectUsage" onchange="updateAgeUsage(this.value)">
+          <option value="all">All Ages</option>
+          <option value="4yo">4 Year Old</option>
+          <option value="3yo">3 Year Old</option>
+          <option value="toddler">Toddler (18–36mo)</option>
+          <option value="infant">Infant (0–18mo)</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-weight:500;">Domain:</span>
+        <select class="sel" id="domainSelect" onchange="updateDomain(this.value)">
+          <option value="all">All Domains</option>
+          <option value="atl">Approaches to Learning</option>
+          <option value="ca">Creative Arts</option>
+          <option value="ll">Language &amp; Literacy</option>
+          <option value="math">Mathematics</option>
+          <option value="pd">Physical Development</option>
+          <option value="sci">Science</option>
+          <option value="ss">Social Studies</option>
+          <option value="sed">Social &amp; Emotional Development</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="county-summary" id="countySummary"></div>
+
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <h3 id="chartTitle">All Counties &mdash; Program-Level Completion</h3>
+        <p id="chartSub">% of enrolled students assessed &middot; All Domains &middot; Fall 2026</p>
+      </div>
+      <div class="legend">
+        <span><span class="legend-dot" style="background:#2EAB6E"></span>&ge;80%</span>
+        <span><span class="legend-dot" style="background:#F5A623"></span>50&ndash;79%</span>
+        <span><span class="legend-dot" style="background:#E04444"></span>&lt;50%</span>
+      </div>
+    </div>
+    <div class="bar-chart-scroll">
+      <div class="bar-chart-inner">
+        <div class="y-axis">
+          <span class="y-label">100%</span>
+          <span class="y-label">75%</span>
+          <span class="y-label">50%</span>
+          <span class="y-label">25%</span>
+          <span class="y-label">0%</span>
+        </div>
+        <div class="bar-chart" id="barChart">
+          <div class="target-line"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-usage -->
+
+<!-- ===================== TAB 2: DEVELOPMENTAL GROWTH ===================== -->
+<div class="tab-panel" id="tab-growth">
+
+  <!-- Growth filter bar -->
+  <div class="growth-filter-bar">
+    <div class="gf-group">
+      <label class="gf-label">County</label>
+      <select class="sel" id="gCountyFilter" onchange="applyGrowthFilters()">
+        <option value="all">All Counties</option>
+        <option value="Jefferson">Jefferson (Louisville)</option>
+        <option value="Fayette">Fayette (Lexington)</option>
+        <option value="Kenton">Kenton (Covington)</option>
+        <option value="Boone">Boone</option>
+        <option value="Warren">Warren (Bowling Green)</option>
+        <option value="Madison">Madison (Richmond)</option>
+        <option value="Hardin">Hardin (Elizabethtown)</option>
+        <option value="Daviess">Daviess (Owensboro)</option>
+        <option value="Pike">Pike</option>
+        <option value="McCracken">McCracken (Paducah)</option>
+      </select>
+    </div>
+    <div class="gf-group">
+      <label class="gf-label">Program Type</label>
+      <select class="sel" id="gTypeFilter" onchange="applyGrowthFilters()">
+        <option value="all">All Types</option>
+        <option value="center">Center-Based</option>
+        <option value="fcc">FCC</option>
+        <option value="headstart">Head Start</option>
+        <option value="pubschool">Public School</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="gf-group">
+      <label class="gf-label">Age Group</label>
+      <select class="sel" id="gAgeFilter" onchange="applyGrowthFilters()">
+        <option value="all">All Ages</option>
+        <option value="4yo">4 Year Old</option>
+        <option value="3yo">3 Year Old</option>
+        <option value="toddler">Toddler (18–36mo)</option>
+        <option value="infant">Infant (0–18mo)</option>
+      </select>
+    </div>
+    <div class="gf-group" style="flex:1;">
+      <label class="gf-label">Program Name</label>
+      <input class="sel" id="gNameFilter" type="text" placeholder="Search program name…" oninput="applyGrowthFilters()" style="width:100%;">
+    </div>
+    <div class="gf-active" id="gFilterActive" style="display:none;">
+      <span id="gFilterChip"></span>
+      <button onclick="clearGrowthFilters()" style="background:none;border:none;cursor:pointer;color:#8892a4;font-size:12px;padding:0 4px;">✕ Clear</button>
+    </div>
+  </div>
+
+  <div class="growth-layout">
+
+    <!-- Left domain/skill panel -->
+    <div class="filter-panel" id="filterPanel"></div>
+
+    <!-- Right chart area -->
+    <div class="growth-chart-card">
+      <div class="growth-chart-header">
+        <h3 id="growthTitle">Language &amp; Literacy Development</h3>
+        <div class="subtitle" id="growthSubtitle">All skills &middot; Average benchmark score (1&ndash;8 scale)</div>
+      </div>
+
+      <div class="growth-summary-row">
+        <div class="g-card">
+          <div class="g-period">Fall</div>
+          <div class="g-score" id="scoreF">3.1</div>
+        </div>
+        <div class="g-card">
+          <div class="g-period">Winter</div>
+          <div class="g-score" id="scoreW">3.9</div>
+        </div>
+        <div class="g-card">
+          <div class="g-period">Spring</div>
+          <div class="g-score" id="scoreS">4.8</div>
+        </div>
+      </div>
+
+      <!-- Observations + students data row -->
+      <div class="obs-row">
+        <div class="obs-label">Observations</div>
+        <div class="obs-period-wrap">
+          <div class="obs-period">
+            <div class="obs-period-name">Fall</div>
+            <div class="obs-val" id="obsF">—</div>
+          </div>
+          <div class="obs-arrow">→</div>
+          <div class="obs-period">
+            <div class="obs-period-name">Winter</div>
+            <div class="obs-val" id="obsW">—</div>
+          </div>
+          <div class="obs-arrow">→</div>
+          <div class="obs-period">
+            <div class="obs-period-name">Spring</div>
+            <div class="obs-val" id="obsS">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="obs-row" style="border-top:none;padding-top:0;margin-top:-1px;">
+        <div class="obs-label">Unique Students</div>
+        <div class="obs-period-wrap">
+          <div class="obs-period">
+            <div class="obs-period-name" style="visibility:hidden">Fall</div>
+            <div class="obs-val" id="stuF">—</div>
+          </div>
+          <div class="obs-arrow">→</div>
+          <div class="obs-period">
+            <div class="obs-period-name" style="visibility:hidden">Winter</div>
+            <div class="obs-val" id="stuW">—</div>
+          </div>
+          <div class="obs-arrow">→</div>
+          <div class="obs-period">
+            <div class="obs-period-name" style="visibility:hidden">Spring</div>
+            <div class="obs-val" id="stuS">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="line-chart-wrap">
+        <svg class="line-chart" id="lineChart" viewBox="0 0 600 260" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /tab-growth -->
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+/* =====================================================================
+   SHARED STATE
+===================================================================== */
+let activeCounty = null;
+let activeDomainKey = 'all';
+window._currentWindow = 'Spring 2026';
+
+const DOMAIN_LABELS = {
+  all:'All Domains', atl:'Approaches to Learning', ca:'Creative Arts',
+  ll:'Language & Literacy', math:'Mathematics', pd:'Physical Development',
+  sci:'Science', ss:'Social Studies', sed:'Social & Emotional Development'
+};
+
+/* =====================================================================
+   USAGE TAB DATA
+===================================================================== */
+const DOMAIN_OFFSETS = {
+  all:0, sed:+8, atl:+6, ll:+4, pd:+2, ca:-2, ss:-6, math:-8, sci:-12
+};
+const PROGRAM_QUIRKS = {
+  "ABC Child Care":{math:+10,sci:+8},"Bright Futures":{ll:+8,sed:+5},
+  "Little Stars":{ca:+12,ss:+8},"Sunrise Center":{math:-10,sci:-8},
+  "Oak St Head Start":{sed:+10,atl:+8},"Rainbow Kids":{sci:-15,ss:-10},
+  "City Kids":{ll:+12,math:-12},"Neighborhood Nest":{atl:+15,ca:+10},
+  "Urban Sprouts":{math:-10,sci:-8},"Hope Street EC":{sed:+20,atl:+18},
+  "Warwick Child Dev":{math:-5,sci:-3},"Cranston EC":{sci:+5,ss:+8},
+  "West Bay Kids":{ca:+10,pd:+5},"Green Meadows":{atl:+5,sed:+5},
+  "Coventry Kinder":{math:-8,ll:+5},"Buttonwoods EC":{sci:-12,ss:-8},
+  "South County EC":{math:+3,sci:-5},"Narragansett Kids":{ll:+5,sed:+5},
+  "Wakefield Head Start":{atl:+8,ca:-5},"Westerly EC":{math:-10,sci:-12},
+  "Charlestown Child":{sed:+15,ll:+10},"Richmond Center":{math:-15,sci:-18},
+  "Newport Head Start":{sci:-3,ss:-3},"Island Kids":{math:+3,ca:+3},
+  "Tiverton EC":{ll:+5,sed:+5},"Middletown Child":{math:-5,sci:-8},
+  "Portsmouth Dev":{atl:+8,ca:+5},"Bristol EC Center":{sed:+10,math:-8},
+  "Barrington Kids":{ll:+10,sci:-10},"Warren Head Start":{atl:+12,math:-5},
+  "East Bay Child":{sed:+20,sci:-15}
+};
+const USAGE_DATA = {
+  counties:[
+    {name:"Jefferson",programs:[
+      {name:"Louisville Head Start",pct:94},{name:"West End Child Dev",pct:87},
+      {name:"Bright Beginnings",pct:81},{name:"Shawnee EC Center",pct:74},
+      {name:"Portland Learning",pct:68},{name:"Jefferson Co. PreK",pct:61},
+      {name:"Newburg Child Care",pct:53},{name:"Okolona EC",pct:45},
+      {name:"South Louisville Kids",pct:31},{name:"Rubbertown Learning",pct:19}]},
+    {name:"Fayette",programs:[
+      {name:"Lexington Head Start",pct:97},{name:"Fayette Co. PreK",pct:92},
+      {name:"Bluegrass Child Dev",pct:85},{name:"Cardinal Hill EC",pct:78},
+      {name:"Lansdowne Learning",pct:71},{name:"Picadome EC",pct:58}]},
+    {name:"Kenton",programs:[
+      {name:"Covington Head Start",pct:91},{name:"Kenton Co. PreK",pct:84},
+      {name:"Northern KY Child Dev",pct:76},{name:"Latonia EC Center",pct:63},
+      {name:"Park Hills Learning",pct:48}]},
+    {name:"Warren",programs:[
+      {name:"Bowling Green Head Start",pct:89},{name:"Warren Co. PreK",pct:82},
+      {name:"Southcentral EC",pct:74},{name:"Lover's Lane Child Dev",pct:61},
+      {name:"Greenwood Learning",pct:44}]},
+    {name:"Boone",programs:[
+      {name:"Boone Co. PreK",pct:88},{name:"Florence Child Dev",pct:79},
+      {name:"Burlington EC",pct:67},{name:"Hebron Learning",pct:52}]},
+    {name:"Madison",programs:[
+      {name:"Richmond Head Start",pct:83},{name:"Madison Co. PreK",pct:75},
+      {name:"Berea EC Center",pct:61},{name:"Eastern KY Child Dev",pct:42}]},
+    {name:"Hardin",programs:[
+      {name:"Elizabethtown Head Start",pct:86},{name:"Hardin Co. PreK",pct:77},
+      {name:"Radcliff Child Dev",pct:64},{name:"Vine Grove EC",pct:49}]},
+    {name:"Daviess",programs:[
+      {name:"Owensboro Head Start",pct:85},{name:"Daviess Co. PreK",pct:76},
+      {name:"Wendell Foster EC",pct:68},{name:"Western KY Child Dev",pct:53}]},
+    {name:"Pike",programs:[
+      {name:"Pikeville Head Start",pct:72},{name:"Pike Co. PreK",pct:61},
+      {name:"Appalachian Child Dev",pct:48},{name:"Coal Run Learning",pct:33}]},
+    {name:"McCracken",programs:[
+      {name:"Paducah Head Start",pct:87},{name:"McCracken Co. PreK",pct:79},
+      {name:"Lone Oak EC",pct:65},{name:"Reidland Child Dev",pct:51}]}
+  ]
+};
+
+function domainPct(prog, key) {
+  const offset = DOMAIN_OFFSETS[key]||0;
+  const quirk = (PROGRAM_QUIRKS[prog.name]||{})[key]||0;
+  return Math.min(100, Math.max(0, prog.pct + offset + quirk));
+}
+function countyPct(county, key) {
+  const avg = county.programs.reduce((s,p)=>s+domainPct(p,key),0)/county.programs.length;
+  return Math.round(avg);
+}
+function statewidePct(key) {
+  const all = USAGE_DATA.counties.flatMap(c=>c.programs);
+  return Math.round(all.reduce((s,p)=>s+domainPct(p,key),0)/all.length);
+}
+function barColor(p){return p>=80?'#2EAB6E':p>=50?'#F5A623':'#E04444';}
+
+function renderCountyCards(){
+  const el=document.getElementById('countySummary'); el.innerHTML='';
+  const allP=statewidePct(activeDomainKey);
+  const ac=document.createElement('div'); ac.className='county-card'+(activeCounty===null?' active':'');
+  ac.innerHTML=`<div class="cc-name">All Counties</div><div class="cc-pct" style="color:#4A90D9">${allP}%</div><div class="cc-bar-bg"><div class="cc-bar-fill" style="width:${allP}%;background:#4A90D9"></div></div><div class="cc-progs">150 programs</div>`;
+  ac.onclick=()=>{activeCounty=null;renderCountyCards();renderBars();updateChartHeader();};
+  el.appendChild(ac);
+  USAGE_DATA.counties.forEach((c,i)=>{
+    const p=countyPct(c,activeDomainKey); const col=barColor(p);
+    const cd=document.createElement('div'); cd.className='county-card'+(activeCounty===i?' active':'');
+    cd.innerHTML=`<div class="cc-name">${c.name} County</div><div class="cc-pct" style="color:${col}">${p}%</div><div class="cc-bar-bg"><div class="cc-bar-fill" style="width:${p}%;background:${col}"></div></div><div class="cc-progs">${c.programs.length} programs</div>`;
+    cd.onclick=()=>{activeCounty=i;renderCountyCards();renderBars();updateChartHeader();};
+    el.appendChild(cd);
+  });
+}
+function getPrograms(){
+  return activeCounty===null?USAGE_DATA.counties.flatMap(c=>c.programs):USAGE_DATA.counties[activeCounty].programs;
+}
+function updateChartHeader(){
+  document.getElementById('chartTitle').textContent=activeCounty===null
+    ?'All Counties \u2014 Program-Level Completion'
+    :`${USAGE_DATA.counties[activeCounty].name} County \u2014 Program-Level Completion`;
+}
+function renderBars(){
+  const chart=document.getElementById('barChart'); const tt=document.getElementById('tooltip');
+  Array.from(chart.children).forEach(c=>{if(!c.classList.contains('target-line'))c.remove();});
+  getPrograms().forEach(p=>{
+    const pct=domainPct(p,activeDomainKey);
+    const grp=document.createElement('div'); grp.className='bar-group';
+    const wrap=document.createElement('div'); wrap.className='bar-wrap';
+    const bar=document.createElement('div'); bar.className='bar';
+    bar.style.height=pct+'%'; bar.style.background=barColor(pct);
+    const lbl=document.createElement('div'); lbl.className='bar-pct-label'; lbl.textContent=pct+'%';
+    bar.appendChild(lbl);
+    bar.addEventListener('mousemove',e=>{
+      tt.style.display='block'; tt.style.left=(e.clientX+14)+'px'; tt.style.top=(e.clientY-36)+'px';
+      tt.innerHTML=`<strong>${p.name}</strong><br>${pct}% assessed<br><span style="opacity:.7;font-size:11px">${DOMAIN_LABELS[activeDomainKey]}</span>`;
+    });
+    bar.addEventListener('mouseleave',()=>{tt.style.display='none';});
+    wrap.appendChild(bar);
+    const xl=document.createElement('div'); xl.className='bar-x-label'; xl.textContent=p.name; xl.title=p.name;
+    grp.appendChild(wrap); grp.appendChild(xl); chart.appendChild(grp);
+  });
+}
+function updateDomain(v){activeDomainKey=v;refreshChartSub();renderCountyCards();renderBars();}
+function updateWindow(v){const m={fall25:'Fall 2025',winter26:'Winter 2026',spring26:'Spring 2026'};window._currentWindow=m[v];refreshChartSub();}
+
+/* =====================================================================
+   GROWTH TAB DATA
+===================================================================== */
+// Scores: Fall clusters 2-3, Winter 3-5, Spring 4-6
+// Each domain/skill/subskill has {f, w, s} (fall, winter, spring avg scores)
+const GROWTH_DATA = {
+  domains: [
+    {
+      key:'ll', label:'Language & Literacy', color:'#7B61C4',
+      skills:[
+        {key:'lld1', label:'LLD 1 Listening', subskills:[
+          {key:'lld1a', label:'LLD 1a Understands and interprets language', scores:{f:2.8,w:3.6,s:4.5}},
+          {key:'lld1b', label:'LLD 1b Follows directions', scores:{f:3.1,w:3.9,s:4.8}}
+        ], scores:{f:2.9,w:3.7,s:4.6}},
+        {key:'lld2', label:'LLD 2 Communication', subskills:[
+          {key:'lld2a', label:'LLD 2a Uses language to express information', scores:{f:2.7,w:3.5,s:4.4}},
+          {key:'lld2b', label:'LLD 2b Uses conversational skills', scores:{f:3.0,w:3.8,s:4.7}},
+          {key:'lld2c', label:'LLD 2c Uses sentence structure', scores:{f:2.5,w:3.3,s:4.2}},
+          {key:'lld2d', label:'LLD 2d Uses and expands vocabulary', scores:{f:2.9,w:3.7,s:4.6}}
+        ], scores:{f:2.8,w:3.6,s:4.5}},
+        {key:'lld3', label:'LLD 3 Phonological Awareness', subskills:[
+          {key:'lld3a', label:'LLD 3a Rhyme', scores:{f:2.4,w:3.2,s:4.1}},
+          {key:'lld3b', label:'LLD 3b Hears Large Units of Sound', scores:{f:2.6,w:3.4,s:4.3}},
+          {key:'lld3c', label:'LLD 3c Hears Small Units of Sound', scores:{f:2.2,w:3.0,s:3.9}}
+        ], scores:{f:2.4,w:3.2,s:4.1}},
+        {key:'lld4', label:'LLD 4 Alphabetic Knowledge', subskills:[
+          {key:'lld4a', label:'LLD 4 Identifies letters, makes letter-sound connections', scores:{f:2.3,w:3.1,s:4.0}}
+        ], scores:{f:2.3,w:3.1,s:4.0}},
+        {key:'lld5', label:'LLD 5 Concepts of Print', subskills:[
+          {key:'lld5a', label:'LLD 5 Uses print concepts and explores books', scores:{f:3.2,w:4.0,s:4.9}}
+        ], scores:{f:3.2,w:4.0,s:4.9}},
+        {key:'lld6', label:'LLD 6 Reading Comprehension', subskills:[
+          {key:'lld6a', label:'LLD 6a Responds to text', scores:{f:2.9,w:3.7,s:4.6}},
+          {key:'lld6b', label:'LLD 6b Retells, asks and answers questions', scores:{f:2.6,w:3.4,s:4.3}}
+        ], scores:{f:2.7,w:3.5,s:4.4}},
+        {key:'lld7', label:'LLD 7 Writing', subskills:[
+          {key:'lld7a', label:'LLD 7a Emergent Writing', scores:{f:2.1,w:2.9,s:3.8}},
+          {key:'lld7b', label:'LLD 7b Uses writing to represent meaning', scores:{f:2.0,w:2.8,s:3.7}}
+        ], scores:{f:2.0,w:2.9,s:3.7}}
+      ],
+      scores:{f:3.1,w:3.9,s:4.8}
+    },
+    {
+      key:'sed', label:'Social & Emotional Dev.', color:'#E05C8A',
+      skills:[
+        {key:'sed1', label:'SED 1 Self-Awareness', subskills:[
+          {key:'sed1a', label:'SED 1a Knows self and expresses confidence', scores:{f:3.3,w:4.1,s:5.0}},
+          {key:'sed1b', label:'SED 1b Expresses needs and preferences', scores:{f:3.1,w:3.9,s:4.8}},
+          {key:'sed1c', label:'SED 1c Completes tasks independently', scores:{f:2.9,w:3.7,s:4.6}},
+          {key:'sed1d', label:'SED 1d Identifies emotions', scores:{f:3.2,w:4.0,s:4.9}}
+        ], scores:{f:3.1,w:3.9,s:4.8}},
+        {key:'sed2', label:'SED 2 Self-Regulation', subskills:[
+          {key:'sed2a', label:'SED 2a Manages feelings and behavior', scores:{f:2.9,w:3.7,s:4.6}},
+          {key:'sed2b', label:'SED 2b Follows routines and transitions', scores:{f:3.2,w:4.0,s:4.9}}
+        ], scores:{f:3.0,w:3.8,s:4.7}},
+        {key:'sed3', label:'SED 3 Social Relationships', subskills:[
+          {key:'sed3a', label:'SED 3a Develops relationships with adults', scores:{f:3.4,w:4.2,s:5.1}},
+          {key:'sed3b', label:'SED 3b Develops relationships with peers', scores:{f:3.0,w:3.8,s:4.7}},
+          {key:'sed3c', label:'SED 3c Participates cooperatively in groups', scores:{f:2.8,w:3.6,s:4.5}},
+          {key:'sed3d', label:'SED 3d Identifies and respects emotions of others', scores:{f:2.7,w:3.5,s:4.4}}
+        ], scores:{f:3.0,w:3.8,s:4.7}},
+        {key:'sed4', label:'SED 4 Problem-Solving', subskills:[
+          {key:'sed4a', label:'SED 4a Solves problems', scores:{f:2.8,w:3.6,s:4.5}},
+          {key:'sed4b', label:'SED 4b Responsible Decision-Making', scores:{f:2.6,w:3.4,s:4.3}}
+        ], scores:{f:2.7,w:3.5,s:4.4}}
+      ],
+      scores:{f:3.0,w:3.8,s:4.7}
+    },
+    {
+      key:'atl', label:'Approaches to Learning', color:'#3AAA6C',
+      skills:[
+        {key:'atl1', label:'ATL 1 Attention & Persistence', subskills:[
+          {key:'atl1a', label:'ATL 1a Sustains attention on tasks', scores:{f:3.0,w:3.8,s:4.7}},
+          {key:'atl1b', label:'ATL 1b Persists through challenges', scores:{f:2.8,w:3.6,s:4.5}}
+        ], scores:{f:2.9,w:3.7,s:4.6}},
+        {key:'atl2', label:'ATL 2 Flexibility & Play', subskills:[
+          {key:'atl2a', label:'ATL 2a Shows flexibility in thinking', scores:{f:2.7,w:3.5,s:4.4}},
+          {key:'atl2b', label:'ATL 2b Engages in creative play', scores:{f:3.2,w:4.0,s:4.9}}
+        ], scores:{f:2.9,w:3.7,s:4.6}}
+      ],
+      scores:{f:2.9,w:3.7,s:4.6}
+    },
+    {
+      key:'math', label:'Mathematics', color:'#7A8C3A',
+      skills:[
+        {key:'m1', label:'M 1 Number Sense', subskills:[
+          {key:'m1a', label:'M 1a Verbally counts numbers', scores:{f:2.9,w:3.7,s:4.6}},
+          {key:'m1b', label:'M 1b Identifies and writes numerals', scores:{f:2.6,w:3.4,s:4.3}},
+          {key:'m1c', label:'M 1c Counting one-to-one, and composing and decomposing numbers', scores:{f:2.5,w:3.3,s:4.2}},
+          {key:'m1d', label:'M 1d Number Quantities and Comparison', scores:{f:2.4,w:3.2,s:4.1}},
+          {key:'m1e', label:'M 1e Addition and Subtraction', scores:{f:2.2,w:3.0,s:3.9}}
+        ], scores:{f:2.5,w:3.3,s:4.2}},
+        {key:'m2', label:'M 2 Spatial Awareness', subskills:[
+          {key:'m2a', label:'M 2a Understands how objects move in space', scores:{f:2.6,w:3.4,s:4.3}},
+          {key:'m2b', label:'M 2b Determines object location', scores:{f:2.8,w:3.6,s:4.5}}
+        ], scores:{f:2.7,w:3.5,s:4.4}},
+        {key:'m3', label:'M 3 Shapes', subskills:[
+          {key:'m3a', label:'M 3 Identifies shapes and their characteristics', scores:{f:2.7,w:3.5,s:4.4}}
+        ], scores:{f:2.7,w:3.5,s:4.4}},
+        {key:'m4', label:'M 4 Measurement', subskills:[
+          {key:'m4a', label:'M 4a Measures and Estimates', scores:{f:2.4,w:3.2,s:4.1}},
+          {key:'m4b', label:'M 4b Compares and Orders', scores:{f:2.6,w:3.4,s:4.3}}
+        ], scores:{f:2.5,w:3.3,s:4.2}},
+        {key:'m5', label:'M 5 Patterns', subskills:[
+          {key:'m5a', label:'M 5 Copies, Creates, and Extends Patterns', scores:{f:2.5,w:3.3,s:4.2}}
+        ], scores:{f:2.5,w:3.3,s:4.2}},
+        {key:'m6', label:'M 6 Classification', subskills:[
+          {key:'m6a', label:'M 6 Sorts and graphs', scores:{f:2.7,w:3.5,s:4.4}}
+        ], scores:{f:2.7,w:3.5,s:4.4}}
+      ],
+      scores:{f:2.5,w:3.3,s:4.2}
+    },
+    {
+      key:'sci', label:'Science', color:'#3A8DE0',
+      skills:[
+        {key:'sci1', label:'SCI 1 Investigation & Inquiry', subskills:[
+          {key:'sci1a', label:'SCI 1a Asks questions and makes predictions', scores:{f:2.6,w:3.4,s:4.3}},
+          {key:'sci1b', label:'SCI 1b Observes, describes and records', scores:{f:2.8,w:3.6,s:4.5}}
+        ], scores:{f:2.7,w:3.5,s:4.4}},
+        {key:'sci2', label:'SCI 2 Natural & Earth Science', subskills:[
+          {key:'sci2a', label:'SCI 2a Understands living and nonliving things', scores:{f:2.5,w:3.3,s:4.2}},
+          {key:'sci2b', label:'SCI 2b Demonstrates knowledge of Earth\'s environment', scores:{f:2.4,w:3.2,s:4.1}}
+        ], scores:{f:2.4,w:3.2,s:4.1}},
+        {key:'sci3', label:'SCI 3 Physical Science', subskills:[
+          {key:'sci3a', label:'SCI 3a Explores forces and motion', scores:{f:2.5,w:3.3,s:4.2}},
+          {key:'sci3b', label:'SCI 3b Explores the physical properties of materials', scores:{f:2.3,w:3.1,s:4.0}}
+        ], scores:{f:2.4,w:3.2,s:4.1}},
+        {key:'sci4', label:'SCI 4 Technology', subskills:[
+          {key:'sci4a', label:'SCI 4 Uses tools and technology to perform tasks', scores:{f:2.6,w:3.4,s:4.3}}
+        ], scores:{f:2.6,w:3.4,s:4.3}}
+      ],
+      scores:{f:2.5,w:3.3,s:4.2}
+    },
+    {
+      key:'pd', label:'Physical Development', color:'#E0C23A',
+      skills:[
+        {key:'pd1', label:'PD 1 Gross Motor', subskills:[
+          {key:'pd1a', label:'PD 1 Builds strength, coordination and balance of large muscles', scores:{f:3.3,w:4.1,s:5.0}}
+        ], scores:{f:3.3,w:4.1,s:5.0}},
+        {key:'pd2', label:'PD 2 Fine Motor', subskills:[
+          {key:'pd2a', label:'PD 2 Builds strength and coordination of small movements', scores:{f:3.0,w:3.8,s:4.7}}
+        ], scores:{f:3.0,w:3.8,s:4.7}},
+        {key:'pd3', label:'PD 3 Safety', subskills:[
+          {key:'pd3a', label:'PD 3 Demonstrates safe practices', scores:{f:3.2,w:4.0,s:4.9}}
+        ], scores:{f:3.2,w:4.0,s:4.9}},
+        {key:'pd4', label:'PD 4 Personal Care', subskills:[
+          {key:'pd4a', label:'PD 4a Implements self-care routines including rest, toileting, handwashing, exercise and dressing', scores:{f:3.1,w:3.9,s:4.8}},
+          {key:'pd4b', label:'PD 4b Understands bodily functions', scores:{f:2.8,w:3.6,s:4.5}}
+        ], scores:{f:2.9,w:3.7,s:4.6}},
+        {key:'pd5', label:'PD 5 Nutrition', subskills:[
+          {key:'pd5a', label:'PD 5 Follows healthy nutrition routines', scores:{f:3.2,w:4.0,s:4.9}}
+        ], scores:{f:3.2,w:4.0,s:4.9}}
+      ],
+      scores:{f:3.1,w:3.9,s:4.8}
+    },
+    {
+      key:'ca', label:'Creative Arts', color:'#F5C842',
+      skills:[
+        {key:'ca1', label:'CA 1 Music', subskills:[
+          {key:'ca1a', label:'CA 1a Expresses through music', scores:{f:3.3,w:4.1,s:5.0}},
+          {key:'ca1b', label:'CA 1b Develops rhythm', scores:{f:3.1,w:3.9,s:4.8}},
+          {key:'ca1c', label:'CA 1c Develops tone', scores:{f:2.9,w:3.7,s:4.6}}
+        ], scores:{f:3.1,w:3.9,s:4.8}},
+        {key:'ca2', label:'CA 2 Dance & Movement', subskills:[
+          {key:'ca2a', label:'CA 2a Expresses through dance', scores:{f:3.4,w:4.2,s:5.1}},
+          {key:'ca2b', label:'CA 2b Develops movement techniques', scores:{f:3.1,w:3.9,s:4.8}}
+        ], scores:{f:3.2,w:4.0,s:4.9}},
+        {key:'ca3', label:'CA 3 Visual Arts', subskills:[
+          {key:'ca3a', label:'CA 3a Expresses through 2D and 3D visual art', scores:{f:3.0,w:3.8,s:4.7}},
+          {key:'ca3b', label:'CA 3b Develops visual art techniques', scores:{f:2.8,w:3.6,s:4.5}}
+        ], scores:{f:2.9,w:3.7,s:4.6}},
+        {key:'ca4', label:'CA 4 Drama', subskills:[
+          {key:'ca4a', label:'CA 4a Participates in dramatic and symbolic play', scores:{f:3.3,w:4.1,s:5.0}},
+          {key:'ca4b', label:'CA 4b Uses and creates props to represent other objects or ideas', scores:{f:2.9,w:3.7,s:4.6}}
+        ], scores:{f:3.1,w:3.9,s:4.8}}
+      ],
+      scores:{f:3.1,w:3.9,s:4.8}
+    },
+    {
+      key:'ss', label:'Social Studies', color:'#C4763A',
+      skills:[
+        {key:'ss1', label:'SS 1 Culture & Community', subskills:[
+          {key:'ss1a', label:'SS 1a Identifies community and family roles', scores:{f:2.8,w:3.6,s:4.5}},
+          {key:'ss1b', label:'SS 1b Explores and respects cultures and traditions', scores:{f:2.7,w:3.5,s:4.4}},
+          {key:'ss1c', label:'SS 1c Respects diversity', scores:{f:2.9,w:3.7,s:4.6}}
+        ], scores:{f:2.8,w:3.6,s:4.5}},
+        {key:'ss2', label:'SS 2 Civics & Economics', subskills:[
+          {key:'ss2a', label:'SS 2a Follows rules, limits and expectations', scores:{f:3.1,w:3.9,s:4.8}},
+          {key:'ss2b', label:'SS 2b Understands concepts of money and economics', scores:{f:2.4,w:3.2,s:4.1}}
+        ], scores:{f:2.7,w:3.5,s:4.4}},
+        {key:'ss3', label:'SS 3 Geography', subskills:[
+          {key:'ss3a', label:'SS 3a Identifies types of places', scores:{f:2.6,w:3.4,s:4.3}},
+          {key:'ss3b', label:'SS 3b Interacts with maps', scores:{f:2.3,w:3.1,s:4.0}}
+        ], scores:{f:2.4,w:3.2,s:4.1}},
+        {key:'ss4', label:'SS 4 History & Sense of Time', subskills:[
+          {key:'ss4a', label:'SS 4 Develops sense of time', scores:{f:2.6,w:3.4,s:4.3}}
+        ], scores:{f:2.6,w:3.4,s:4.3}}
+      ],
+      scores:{f:2.6,w:3.4,s:4.3}
+    }
+  ]
+};
+
+// Age group — shared across both tabs
+let activeAgeUsage = 'all';
+let gAge = 'all';
+
+// Age shifts score baseline (younger = lower benchmarks) and pop multiplier
+const AGE_SCORE_OFFSETS = { all:0, '4yo':+0.7, '3yo':-0.4, toddler:-1.4, infant:-2.2 };
+const AGE_MULTIPLIERS   = { all:1, '4yo':0.38, '3yo':0.35, toddler:0.18, infant:0.09 };
+const AGE_LABELS        = { all:'All Ages', '4yo':'4 Year Old', '3yo':'3 Year Old', toddler:'Toddler (18–36mo)', infant:'Infant (0–18mo)' };
+
+// Usage tab: age just affects the chart subtitle for now (completion % is age-agnostic in mock)
+function updateAgeUsage(val) {
+  activeAgeUsage = val;
+  refreshChartSub();
+}
+
+function refreshChartSub() {
+  const win = window._currentWindow || 'Spring 2026';
+  const domain = DOMAIN_LABELS[activeDomainKey];
+  const age = activeAgeUsage !== 'all' ? ` \u00b7 ${AGE_LABELS[activeAgeUsage]}` : '';
+  document.getElementById('chartSub').textContent =
+    `% of enrolled students assessed \u00b7 ${domain}${age} \u00b7 ${win}`;
+}
+let gDomainIdx = 0;
+let gSkillKey = null;
+let gSubskillKey = null;
+let gCounty = 'all';
+let gType = 'all';
+let gName = '';
+
+// Per-filter obs/student multipliers (simulate filtered subsets)
+const COUNTY_MULTIPLIERS = { all:1, Jefferson:0.28, Fayette:0.16, Kenton:0.10, Warren:0.09, Boone:0.08, Madison:0.07, Hardin:0.07, Daviess:0.07, Pike:0.05, McCracken:0.06 };
+const TYPE_MULTIPLIERS = { all:1, center:0.52, fcc:0.18, headstart:0.22, pubschool:0.16, other:0.08 };
+
+function applyGrowthFilters() {
+  gCounty = document.getElementById('gCountyFilter').value;
+  gType   = document.getElementById('gTypeFilter').value;
+  gAge    = document.getElementById('gAgeFilter').value;
+  gName   = document.getElementById('gNameFilter').value.trim().toLowerCase();
+  const hasFilter = gCounty!=='all' || gType!=='all' || gAge!=='all' || gName!=='';
+  const chip = document.getElementById('gFilterActive');
+  chip.style.display = hasFilter ? 'flex' : 'none';
+  if (hasFilter) {
+    const parts = [];
+    if (gCounty!=='all') parts.push(gCounty+' County');
+    if (gType!=='all') parts.push({center:'Center-Based',fcc:'FCC',headstart:'Head Start',pubschool:'Public School',other:'Other'}[gType]);
+    if (gAge!=='all') parts.push(AGE_LABELS[gAge]);
+    if (gName) parts.push(`"${gName}"`);
+    document.getElementById('gFilterChip').textContent = parts.join(' · ');
+  }
+  updateGrowthChart();
+}
+
+function clearGrowthFilters() {
+  document.getElementById('gCountyFilter').value = 'all';
+  document.getElementById('gTypeFilter').value = 'all';
+  document.getElementById('gAgeFilter').value = 'all';
+  document.getElementById('gNameFilter').value = '';
+  gCounty='all'; gType='all'; gAge='all'; gName='';
+  document.getElementById('gFilterActive').style.display='none';
+  updateGrowthChart();
+}
+
+function getFilteredObsCounts(baseObs, baseStu) {
+  const cm = COUNTY_MULTIPLIERS[gCounty] || 1;
+  const tm = TYPE_MULTIPLIERS[gType] || 1;
+  const am = AGE_MULTIPLIERS[gAge] || 1;
+  const nm = gName ? Math.max(0.15, 0.8 - gName.length * 0.05) : 1;
+  const mult = cm * tm * am * nm;
+  return {
+    obs: { f: Math.round(baseObs.f * mult), w: Math.round(baseObs.w * mult), s: Math.round(baseObs.s * mult) },
+    stu: { f: Math.round(baseStu.f * mult), w: Math.round(baseStu.w * mult), s: Math.round(baseStu.s * mult) }
+  };
+}
+
+function getCurrentScores() {
+  const domain = GROWTH_DATA.domains[gDomainIdx];
+  if (gSubskillKey) {
+    for (const sk of domain.skills) {
+      const ss = sk.subskills.find(s=>s.key===gSubskillKey);
+      if (ss) return ss.scores;
+    }
+  }
+  if (gSkillKey) {
+    const sk = domain.skills.find(s=>s.key===gSkillKey);
+    if (sk) return sk.scores;
+  }
+  return domain.scores;
+}
+
+function getCurrentLabel() {
+  const domain = GROWTH_DATA.domains[gDomainIdx];
+  if (gSubskillKey) {
+    for (const sk of domain.skills) {
+      const ss = sk.subskills.find(s=>s.key===gSubskillKey);
+      if (ss) return ss.label;
+    }
+  }
+  if (gSkillKey) {
+    const sk = domain.skills.find(s=>s.key===gSkillKey);
+    if (sk) return sk.label;
+  }
+  return domain.label;
+}
+
+function buildFilterPanel() {
+  const panel = document.getElementById('filterPanel');
+  panel.innerHTML = '';
+
+  GROWTH_DATA.domains.forEach((domain, di) => {
+    const sec = document.createElement('div');
+    sec.className = 'filter-section';
+
+    // Domain button
+    const domBtn = document.createElement('button');
+    domBtn.className = 'filter-domain-btn' + (di===gDomainIdx?' active':'');
+    domBtn.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${domain.color};margin-right:8px;"></span>${domain.label} <span class="caret" style="float:right">${di===gDomainIdx?'▾':'▸'}</span>`;
+    domBtn.onclick = () => {
+      gDomainIdx = di; gSkillKey = null; gSubskillKey = null;
+      buildFilterPanel(); updateGrowthChart();
+    };
+    sec.appendChild(domBtn);
+
+    // Skill list (open if this domain is active)
+    const skillList = document.createElement('div');
+    skillList.className = 'filter-skill-list' + (di===gDomainIdx?' open':'');
+
+    domain.skills.forEach(sk => {
+      const skBtn = document.createElement('button');
+      skBtn.className = 'filter-skill-btn' + (gSkillKey===sk.key&&!gSubskillKey?' active':'');
+      skBtn.innerHTML = `${sk.label} <span class="caret" style="float:right">${gSkillKey===sk.key?'▾':'▸'}</span>`;
+      skBtn.onclick = (e) => {
+        e.stopPropagation();
+        gDomainIdx = di;
+        gSkillKey = (gSkillKey===sk.key&&!gSubskillKey)?null:sk.key;
+        gSubskillKey = null;
+        buildFilterPanel(); updateGrowthChart();
+      };
+      skillList.appendChild(skBtn);
+
+      // Subskill list
+      const ssList = document.createElement('div');
+      ssList.className = 'filter-subskill-list' + (gSkillKey===sk.key?' open':'');
+      sk.subskills.forEach(ss => {
+        const ssBtn = document.createElement('button');
+        ssBtn.className = 'filter-subskill-btn' + (gSubskillKey===ss.key?' active':'');
+        ssBtn.textContent = ss.label;
+        ssBtn.onclick = (e) => {
+          e.stopPropagation();
+          gDomainIdx = di; gSkillKey = sk.key; gSubskillKey = ss.key;
+          buildFilterPanel(); updateGrowthChart();
+        };
+        ssList.appendChild(ssBtn);
+      });
+      skillList.appendChild(ssList);
+    });
+
+    sec.appendChild(skillList);
+    panel.appendChild(sec);
+  });
+}
+
+function updateGrowthChart() {
+  const scores = getCurrentScores();
+  const label = getCurrentLabel();
+  const domain = GROWTH_DATA.domains[gDomainIdx];
+
+  document.getElementById('growthTitle').textContent = label;
+  const sublabel = gSubskillKey ? 'Subskill view' : gSkillKey ? 'Skill view' : 'All skills';
+  const ageLabel = gAge !== 'all' ? ` \u00b7 ${AGE_LABELS[gAge]}` : '';
+  document.getElementById('growthSubtitle').textContent =
+    `${sublabel} \u00b7 Average benchmark score (1\u20138 scale)${ageLabel}`;
+
+  // Apply age offset to scores (younger = lower benchmarks)
+  const ao = AGE_SCORE_OFFSETS[gAge] || 0;
+  const adjScores = {
+    f: Math.min(8, Math.max(1, +(scores.f + ao).toFixed(1))),
+    w: Math.min(8, Math.max(1, +(scores.w + ao).toFixed(1))),
+    s: Math.min(8, Math.max(1, +(scores.s + ao).toFixed(1)))
+  };
+
+  document.getElementById('scoreF').textContent = adjScores.f.toFixed(1);
+  document.getElementById('scoreW').textContent = adjScores.w.toFixed(1);
+  document.getElementById('scoreS').textContent = adjScores.s.toFixed(1);
+
+  // Base obs/student counts — domain level full population
+  const depthMult = gSubskillKey ? 0.28 : gSkillKey ? 0.55 : 1.0;
+  const baseObs = { f: Math.round(24600*depthMult), w: Math.round(28400*depthMult), s: Math.round(31800*depthMult) };
+  const baseStu = { f: Math.round(3220*depthMult), w: Math.round(3460*depthMult), s: Math.round(3620*depthMult) };
+
+  const { obs, stu } = getFilteredObsCounts(baseObs, baseStu);
+  document.getElementById('obsF').textContent = obs.f.toLocaleString();
+  document.getElementById('obsW').textContent = obs.w.toLocaleString();
+  document.getElementById('obsS').textContent = obs.s.toLocaleString();
+  document.getElementById('stuF').textContent = stu.f.toLocaleString();
+  document.getElementById('stuW').textContent = stu.w.toLocaleString();
+  document.getElementById('stuS').textContent = stu.s.toLocaleString();
+
+  drawLineChart(adjScores, domain.color);
+}
+
+function drawLineChart(scores, color) {
+  const svg = document.getElementById('lineChart');
+  svg.innerHTML = '';
+
+  const W = 600, H = 260;
+  const padL = 52, padR = 30, padT = 30, padB = 40;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  const minY = 1, maxY = 8;
+  const periods = ['Fall', 'Winter', 'Spring'];
+  const vals = [scores.f, scores.w, scores.s];
+  const xs = [0, 0.5, 1].map(t => padL + t * chartW);
+  const toY = v => padT + chartH - ((v - minY) / (maxY - minY)) * chartH;
+
+  const ns = 'http://www.w3.org/2000/svg';
+
+  // Grid lines + Y labels
+  for (let v = 1; v <= 8; v++) {
+    const y = toY(v);
+    const line = document.createElementNS(ns, 'line');
+    line.setAttribute('x1', padL); line.setAttribute('x2', W-padR);
+    line.setAttribute('y1', y); line.setAttribute('y2', y);
+    line.setAttribute('stroke', v===1||v===8?'#cdd2db':'#e8ecf2');
+    line.setAttribute('stroke-width', '1');
+    svg.appendChild(line);
+
+    const txt = document.createElementNS(ns, 'text');
+    txt.setAttribute('x', padL-8); txt.setAttribute('y', y+4);
+    txt.setAttribute('text-anchor','end'); txt.setAttribute('font-size','11');
+    txt.setAttribute('fill','#aab0bb'); txt.textContent = v;
+    svg.appendChild(txt);
+  }
+
+  // Shaded typical-range bands
+  const bands = [
+    {lo:2,hi:3,label:'Typical Fall range',col:'rgba(74,144,217,0.06)'},
+    {lo:3,hi:5,label:'Typical Winter range',col:'rgba(74,144,217,0.06)'},
+    {lo:4,hi:6,label:'Typical Spring range',col:'rgba(74,144,217,0.06)'}
+  ];
+  xs.forEach((x, i) => {
+    const b = bands[i];
+    const bw = i===1 ? chartW*0.5 : (i===0?chartW*0.5:chartW*0.5);
+    // Draw a column band
+    const bx = i===0?padL : i===1?padL+chartW*0.25 : padL+chartW*0.5;
+    const rect = document.createElementNS(ns, 'rect');
+    rect.setAttribute('x', bx); rect.setAttribute('width', chartW*0.5);
+    rect.setAttribute('y', toY(b.hi)); rect.setAttribute('height', toY(b.lo)-toY(b.hi));
+    rect.setAttribute('fill', b.col);
+    svg.appendChild(rect);
+  });
+
+  // Area fill under line
+  const areaPoints = `${xs[0]},${toY(vals[0])} ${xs[1]},${toY(vals[1])} ${xs[2]},${toY(vals[2])} ${xs[2]},${toY(minY)} ${xs[0]},${toY(minY)}`;
+  const area = document.createElementNS(ns, 'polygon');
+  area.setAttribute('points', areaPoints);
+  area.setAttribute('fill', color); area.setAttribute('fill-opacity','0.08');
+  svg.appendChild(area);
+
+  // Line
+  const polyline = document.createElementNS(ns, 'polyline');
+  polyline.setAttribute('points', vals.map((v,i)=>`${xs[i]},${toY(v)}`).join(' '));
+  polyline.setAttribute('fill','none'); polyline.setAttribute('stroke', color);
+  polyline.setAttribute('stroke-width','2.5'); polyline.setAttribute('stroke-linejoin','round');
+  svg.appendChild(polyline);
+
+  // Dots + value labels
+  const tt = document.getElementById('tooltip');
+  vals.forEach((v, i) => {
+    const cx = xs[i], cy = toY(v);
+
+    // Value label above dot
+    const vtxt = document.createElementNS(ns, 'text');
+    vtxt.setAttribute('x', cx); vtxt.setAttribute('y', cy-12);
+    vtxt.setAttribute('text-anchor','middle'); vtxt.setAttribute('font-size','12');
+    vtxt.setAttribute('font-weight','600'); vtxt.setAttribute('fill', color);
+    vtxt.textContent = v.toFixed(1);
+    svg.appendChild(vtxt);
+
+    // Dot
+    const circle = document.createElementNS(ns, 'circle');
+    circle.setAttribute('cx', cx); circle.setAttribute('cy', cy);
+    circle.setAttribute('r','6'); circle.setAttribute('fill', color);
+    circle.setAttribute('stroke','white'); circle.setAttribute('stroke-width','2');
+    circle.style.cursor = 'pointer';
+    circle.addEventListener('mousemove', e => {
+      tt.style.display='block'; tt.style.left=(e.clientX+14)+'px'; tt.style.top=(e.clientY-36)+'px';
+      tt.innerHTML=`<strong>${periods[i]}</strong><br>Avg benchmark: <strong>${v.toFixed(1)}</strong><br><span style="opacity:.7;font-size:11px">${getCurrentLabel()}</span>`;
+    });
+    circle.addEventListener('mouseleave',()=>{tt.style.display='none';});
+    svg.appendChild(circle);
+
+    // X label
+    const xtxt = document.createElementNS(ns, 'text');
+    xtxt.setAttribute('x', cx); xtxt.setAttribute('y', H-padB+18);
+    xtxt.setAttribute('text-anchor','middle'); xtxt.setAttribute('font-size','12');
+    xtxt.setAttribute('fill','#8892a4'); xtxt.textContent = periods[i];
+    svg.appendChild(xtxt);
+  });
+}
+
+/* =====================================================================
+   TAB SWITCHING
+===================================================================== */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* =====================================================================
+   INIT
+===================================================================== */
+renderCountyCards();
+renderBars();
+buildFilterPanel();
+updateGrowthChart();
+</script>
+</body>
+</html>
